@@ -33,6 +33,11 @@
   </style>
 </head>
 <body class="bg-gradient-to-b from-purple-900 via-gray-900 to-black text-white min-h-screen">
+  <script>
+          var hasLocation = "<%= (user && user.location && user.location.coordinates && user.location.coordinates.length === 2) ? 'true' : 'false' %>";
+  </script>
+
+  <% const hasLocation = user && user.location && user.location.coordinates && user.location.coordinates.length === 2; %>
 
   <!-- Navbar -->
   <nav class="bg-purple-600 p-4 flex justify-between items-center shadow-lg">
@@ -66,7 +71,7 @@
   <div class="p-4 mt-6">
     <div id="user-cards" class="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-6" style="scrollbar-width: thin;">
       <% users.forEach(user => { %>
-        <div class="min-w-[320px] max-w-xs bg-gray-800 rounded-2xl shadow-lg text-center card-hover relative overflow-hidden snap-center flex-shrink-0 flex flex-col" style="height: 480px;">
+        <div class="user-item min-w-[320px] max-w-xs bg-gray-800 rounded-2xl shadow-lg text-center card-hover relative overflow-hidden snap-center flex-shrink-0 flex flex-col" style="height: 480px;" data-userid="<%= user._id %>">
           <div class="relative w-full h-2/3">
             <!-- User image gallery -->
             <div class="flex overflow-x-auto snap-x snap-mandatory h-full" id="photos-<%= user._id %>">
@@ -190,6 +195,35 @@
 
   <!-- Scripts -->
   <script>
+    // Geolocation: detect and update user location if not set
+    window.addEventListener('DOMContentLoaded', function() {
+      // Only run if user location is not set (or always, if you want to update)
+        if (hasLocation !== 'true' && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          fetch('/api/location', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              // Reload to update dashboard with new location/city
+              window.location.reload();
+            }
+          })
+          .catch(() => {
+            // Optionally show error
+          });
+        }, function(error) {
+          // Optionally handle denied/failed geolocation
+        });
+      }
+    });
+
     // Mobile menu toggle
     document.getElementById('menu-btn').addEventListener('click', () => {
       document.getElementById('mobile-menu').classList.toggle('hidden');
@@ -244,31 +278,6 @@
       });
     });
   </script>
-
-
-  <!-- Mobile Bottom Navbar -->
-  <nav class="fixed bottom-0 left-0 w-full bg-gray-900 border-t border-gray-800 flex justify-around items-center py-2 z-50 md:hidden">
-    <a href="/dashboard" class="flex flex-col items-center text-xs text-gray-300 hover:text-pink-400 transition">
-      <i class="fas fa-home text-lg"></i>
-      <span>Home</span>
-    </a>
-    <a href="/matches" class="flex flex-col items-center text-xs text-gray-300 hover:text-pink-400 transition">
-      <i class="fas fa-heart text-lg"></i>
-      <span>Matches</span>
-    </a>
-    <a href="/chat/list" class="flex flex-col items-center text-xs text-gray-300 hover:text-pink-400 transition">
-      <i class="fas fa-comments text-lg"></i>
-      <span>Chats</span>
-    </a>
-    <a href="/stories" class="flex flex-col items-center text-xs text-gray-300 hover:text-pink-400 transition">
-      <i class="fas fa-book-open text-lg"></i>
-      <span>Stories</span>
-    </a>
-    <a href="/profile1" class="flex flex-col items-center text-xs text-gray-300 hover:text-pink-400 transition">
-      <i class="fas fa-user text-lg"></i>
-      <span>Profile</span>
-    </a>
-  </nav>
 
 </body>
 </html>

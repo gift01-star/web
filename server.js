@@ -349,19 +349,42 @@ app.get('/dashboard', isLoggedIn, async (req, res) => {
       };
     }
 
-    // Filter by shared interests if user has any
-    let interestQuery = {};
-    if (Array.isArray(loggedInUser.interests) && loggedInUser.interests.length > 0) {
-      interestQuery = { interests: { $in: loggedInUser.interests } };
-    }
-
-    // Combine all queries
-    const users = await User.find({
+    // Match by shared interests, hobbies, location, and preferred gender
+    let matchQuery = {
       _id: { $ne: req.session.user._id },
       $or: [{ name: regex }, { email: regex }],
-      ...geoQuery,
-      ...interestQuery
-    }).select('name email profileImage isOnline interests location city');
+      ...geoQuery
+    };
+
+    // At least one shared interest or hobby
+    const interestHobby = [];
+    if (Array.isArray(loggedInUser.interests) && loggedInUser.interests.length > 0) {
+      interestHobby.push({ interests: { $in: loggedInUser.interests } });
+    }
+    if (Array.isArray(loggedInUser.hobbies) && loggedInUser.hobbies.length > 0) {
+      interestHobby.push({ hobbies: { $in: loggedInUser.hobbies } });
+    }
+    if (interestHobby.length > 0) {
+      matchQuery.$or = [...matchQuery.$or, ...interestHobby];
+    }
+
+    // Preferred gender logic
+    if (loggedInUser.preferredGender) {
+      matchQuery.gender = loggedInUser.preferredGender;
+    }
+    if (loggedInUser.gender) {
+      matchQuery.$and = [
+        ...(matchQuery.$and || []),
+        { $or: [
+          { preferredGender: { $exists: false } },
+          { preferredGender: '' },
+          { preferredGender: loggedInUser.gender }
+        ] }
+      ];
+    }
+
+    const users = await User.find(matchQuery)
+      .select('name email profileImage isOnline interests hobbies location city gender preferredGender');
 
     // Calculate distance for each user
     function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
