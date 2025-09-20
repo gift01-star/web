@@ -27,7 +27,7 @@ const settingsRoutes = require('./routes/settings');
 
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
 const io=socketIO(server);
 
@@ -553,9 +553,9 @@ app.post('/message/:id/delete', isLoggedIn, async (req, res) => {
     if (message.sender.toString() !== req.session.user._id) {
       return res.status(403).send('Unauthorized');
     }
-
-    await message.remove();
-    res.redirect(`message`);
+    const otherUserId = message.sender.toString() === req.session.user._id ? message.receiver : message.sender;
+    await Message.findByIdAndDelete(req.params.id);
+    res.redirect(`/chat/${otherUserId}`);
   } catch (err) {
     console.error('Delete message error:', err);
     res.status(500).send('Could not delete message');
@@ -854,5 +854,5 @@ async function getUsersWhoLikedMe(userId) {
 
 // Start server
 server.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });

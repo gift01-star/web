@@ -114,13 +114,14 @@
 
   <!-- Chat Messages -->
   <main class="flex-1 flex flex-col pt-24 pb-20 w-full max-w-full">
+    <div id="chat-log" class="text-center text-yellow-400 text-sm mb-2"></div>
     <div id="chat-container" class="flex-1 overflow-y-auto space-y-4 w-full max-w-full px-2 py-3">
       <% if (messages.length === 0) { %>
         <p class="text-center text-gray-400">No messages yet. Start the conversation!</p>
       <% } else { %>
         <% messages.forEach(message => { %>
           <div class="flex <%= message.sender.toString() === user._id.toString() ? 'justify-end' : 'justify-start' %>">
-            <div class="max-w-[75%] px-4 py-2 rounded-lg 
+            <div class="max-w-[75%] px-4 py-2 rounded-lg relative 
               <%= message.sender.toString() === user._id.toString() ? 'bg-indigo-600 text-white' : 'bg-gray-700 text-gray-100' %>">
               <% if (message.image) { %>
                 <img src="<%= message.image %>" class="rounded-lg max-h-48 mb-2" />
@@ -135,6 +136,11 @@
                 <p class="text-sm"><%= message.content %></p>
               <% } %>
               <small class="block text-xs text-gray-300 mt-1"><%= new Date(message.timestamp).toLocaleTimeString() %></small>
+              <% if (message.sender.toString() === user._id.toString()) { %>
+                <form method="POST" action="/message/<%= message._id %>/delete" style="display:inline;position:absolute;top:0.25rem;right:0.25rem;">
+                  <button type="submit" title="Delete" class="text-xs text-red-300 hover:text-red-500 bg-transparent border-none">✖</button>
+                </form>
+              <% } %>
             </div>
           </div>
         <% }); %>
@@ -372,6 +378,9 @@
 
     // File upload (image or audio)
     document.getElementById('fileUpload').addEventListener('change', function(e) {
+      const log = document.getElementById('chat-log');
+      log.textContent = 'Uploading photo or audio...';
+      setTimeout(() => { log.textContent = ''; }, 3000);
       document.querySelector('footer form').submit();
     });
 
@@ -379,22 +388,29 @@
     let mediaRecorder, audioChunks = [];
     const recordBtn = document.getElementById('recordBtn');
     recordBtn.addEventListener('click', async function() {
+      const log = document.getElementById('chat-log');
       if (mediaRecorder && mediaRecorder.state === 'recording') {
         mediaRecorder.stop();
-        recordBtn.textContent = 'Record';
+        recordBtn.textContent = '🎤';
+        log.textContent = '';
         return;
       }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorder = new MediaRecorder(stream);
       audioChunks = [];
       mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      mediaRecorder.onstart = () => {
+        log.textContent = 'Recording...';
+      };
       mediaRecorder.onstop = () => {
+        log.textContent = 'Uploading audio...';
         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
         const file = new File([audioBlob], 'audio.webm', { type: 'audio/webm' });
         const formData = new FormData();
         formData.append('file', file);
         fetch(`/chat/${otherUserId}`, { method: 'POST', body: formData })
           .then(() => location.reload());
+        setTimeout(() => { log.textContent = ''; }, 3000);
       };
       mediaRecorder.start();
       recordBtn.textContent = 'Stop';
