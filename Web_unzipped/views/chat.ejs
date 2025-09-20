@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chat with <%= otherUser.name %></title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="/socket.io/socket.io.js"></script>
+  
+  <!-- Only messages scroll, header and footer are fixed -->
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      background: #18181b;
+    }
+    body {
+      min-height: 100vh;
+      min-width: 100vw;
+      width: 100vw;
+      max-width: 100vw;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    main {
+      flex: 1 1 0%;
+      display: flex;
+      flex-direction: column;
+      padding-top: 96px;
+      padding-bottom: 80px;
+      min-height: 0;
+      width: 100vw;
+      max-width: 100vw;
+      box-sizing: border-box;
+    }
+    #chat-container {
+      flex: 1 1 0%;
+      overflow-y: auto;
+      min-height: 0;
+      width: 100vw;
+      max-width: 100vw;
+      box-sizing: border-box;
+      padding-left: env(safe-area-inset-left, 0);
+      padding-right: env(safe-area-inset-right, 0);
+    }
+    header, footer {
+      position: fixed;
+      left: 0;
+      width: 100vw;
+      max-width: 100vw;
+      z-index: 10;
+      box-sizing: border-box;
+    }
+    header {
+      top: 0;
+    }
+    footer {
+      bottom: 0;
+    }
+    @media (min-width: 640px) {
+      body {
+        align-items: center;
+      }
+      main, #chat-container, header, footer {
+        max-width: 420px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-white flex flex-col min-h-screen w-screen overflow-x-hidden">
+
+  <!-- Header with Call Buttons -->
+  <header class="bg-gray-800 p-4 text-center text-xl font-semibold shadow-md flex flex-col items-center gap-2 fixed top-0 left-0 w-full z-10">
+    <div class="flex items-center justify-between w-full max-w-lg mx-auto">
+      <div class="flex flex-col items-start">
+        <span>💬 Chat with <%= otherUser.name %></span>
+        <span id="online-status" class="text-xs mt-1">
+          <% if (otherUser.isOnline) { %>
+            <span class="text-green-400 font-semibold">● Online</span>
+          <% } else if (otherUser.lastOnline) { %>
+            <span class="text-gray-400">Last seen: <%= new Date(otherUser.lastOnline).toLocaleString() %></span>
+          <% } else { %>
+            <span class="text-gray-400">Offline</span>
+          <% } %>
+        </span>
+        <span id="self-online-status" class="text-xs mt-1">
+          You are: 
+          <% if (user.isOnline) { %>
+            <span class="text-green-400 font-semibold">● Online</span>
+          <% } else if (user.lastOnline) { %>
+            <span class="text-gray-400">Last seen: <%= new Date(user.lastOnline).toLocaleString() %></span>
+          <% } else { %>
+            <span class="text-gray-400">Offline</span>
+          <% } %>
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="startAudioCall()" title="Audio Call"
+          class="text-green-400 hover:text-green-300 text-xl focus:outline-none">
+          🎧
+        </button>
+        <button type="button" onclick="startVideoCall()" title="Video Call"
+          class="text-red-400 hover:text-red-300 text-xl focus:outline-none">
+          🎥
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Chat Messages -->
+  <main class="flex-1 flex flex-col pt-24 pb-20 w-full max-w-full">
+    <div id="chat-log" class="text-center text-yellow-400 text-sm mb-2"></div>
+    <div id="chat-container" class="flex-1 overflow-y-auto space-y-4 w-full max-w-full px-2 py-3">
+      <% if (messages.length === 0) { %>
+        <p class="text-center text-gray-400">No messages yet. Start the conversation!</p>
+      <% } else { %>
+        <% messages.forEach(message => { %>
+          <div class="flex <%= message.sender.toString() === user._id.toString() ? 'justify-end' : 'justify-start' %>">
+            <div class="max-w-[75%] px-4 py-2 rounded-lg relative 
+              <%= message.sender.toString() === user._id.toString() ? 'bg-indigo-600 text-white' : 'bg-gray-700 text-gray-100' %>">
+              <% if (message.image) { %>
+                <img src="<%= message.image %>" class="rounded-lg max-h-48 mb-2" />
+              <% } %>
+              <% if (message.audio) { %>
+                <audio controls class="w-full my-2">
+                  <source src="<%= message.audio %>" type="audio/webm">
+                  Your browser does not support the audio element.
+                </audio>
+              <% } %>
+              <% if (message.content) { %>
+                <p class="text-sm"><%= message.content %></p>
+              <% } %>
+              <small class="block text-xs text-gray-300 mt-1"><%= new Date(message.timestamp).toLocaleTimeString() %></small>
+              <% if (message.sender.toString() === user._id.toString()) { %>
+                <form method="POST" action="/message/<%= message._id %>/delete" style="display:inline;position:absolute;top:0.25rem;right:0.25rem;">
+                  <button type="submit" title="Delete" class="text-xs text-red-300 hover:text-red-500 bg-transparent border-none">✖</button>
+                </form>
+              <% } %>
+            </div>
+          </div>
+        <% }); %>
+      <% } %>
+    </div>
+  </main>
+
+  <!-- Footer: Message Input + Camera Button -->
+  <footer class="bg-gray-800 p-2 shadow-inner fixed bottom-0 left-0 w-full z-10">
+    <form action="/chat/<%= otherUser._id %>" method="POST" enctype="multipart/form-data" class="flex items-center gap-2 w-full max-w-md mx-auto">
+      <label class="cursor-pointer text-xl flex-shrink-0" title="Send Image or Audio">
+        📷/
+        <input type="file" id="fileUpload" name="file" accept="image/*,audio/*" class="hidden">
+      </label>
+      <input type="text" name="content" placeholder="Message..."
+        class="flex-grow rounded-lg px-3 py-2 text-black focus:outline-none text-sm" maxlength="120" />
+      <button type="button" id="recordBtn" class="bg-yellow-500 hover:bg-yellow-400 px-2 py-2 rounded-lg text-white font-semibold flex-shrink-0">🎤</button>
+      <button type="submit"
+        class="bg-indigo-600 hover:bg-indigo-500 px-3 py-2 rounded-lg text-white font-semibold flex-shrink-0">
+        Send
+      </button>
+    </form>
+  </footer>
+
+  <!-- Scripts -->
+  <script>
+    const socket = io();
+    const userId = '<%= user._id %>';
+    const otherUserId = '<%= otherUser._id %>';
+
+    socket.emit('join', userId);
+
+    // Real-time online status update
+    socket.on('userOnlineStatus', ({ userId: changedId, isOnline, lastOnline }) => {
+      if (changedId === otherUserId) {
+        const status = document.getElementById('online-status');
+        if (isOnline) {
+          status.innerHTML = '<span class="text-green-400 font-semibold">● Online</span>';
+        } else if (lastOnline) {
+          status.innerHTML = `<span class="text-gray-400">Last seen: ${new Date(lastOnline).toLocaleString()}</span>`;
+        } else {
+          status.innerHTML = '<span class="text-gray-400">Offline</span>';
+        }
+      }
+      if (changedId === userId) {
+        const selfStatus = document.getElementById('self-online-status');
+        if (isOnline) {
+          selfStatus.innerHTML = 'You are: <span class="text-green-400 font-semibold">● Online</span>';
+        } else if (lastOnline) {
+          selfStatus.innerHTML = `You are: <span class="text-gray-400">Last seen: ${new Date(lastOnline).toLocaleString()}</span>`;
+        } else {
+          selfStatus.innerHTML = 'You are: <span class="text-gray-400">Offline</span>';
+        }
+      }
+    });
+
+    // Real-time message receive
+    socket.on('receiveMessage', (msg) => {
+      if (msg.from === otherUserId) {
+        const chatContainer = document.getElementById('chat-container');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'flex justify-start';
+        msgDiv.innerHTML = `
+          <div class="max-w-[75%] px-4 py-2 rounded-lg bg-gray-700 text-gray-100">
+            <p class="text-sm">${msg.content}</p>
+            <small class="block text-xs text-gray-300 mt-1">${new Date(msg.timestamp).toLocaleTimeString()}</small>
+          </div>
+        `;
+        chatContainer.appendChild(msgDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    });
+
+    // Audio/video call logic (WebRTC signaling)
+    let localStream;
+    let peerConnection;
+    const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+    async function startAudioCall() {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      showCallOverlay('audio');
+      peerConnection = new RTCPeerConnection(config);
+      localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+      peerConnection.onicecandidate = e => {
+        if (e.candidate) {
+          socket.emit('call-user', { to: otherUserId, from: userId, signal: { candidate: e.candidate } });
+        }
+      };
+      peerConnection.ontrack = e => {
+        let audio = document.getElementById('remoteAudio');
+        if (!audio) {
+          audio = document.createElement('audio');
+          audio.id = 'remoteAudio';
+          audio.autoplay = true;
+          document.body.appendChild(audio);
+        }
+        audio.srcObject = e.streams[0];
+      };
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+      socket.emit('call-user', { to: otherUserId, from: userId, signal: { sdp: offer } });
+    }
+
+    async function startVideoCall() {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+      showCallOverlay('video');
+      showLocalVideo(localStream);
+      peerConnection = new RTCPeerConnection(config);
+      localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+      peerConnection.onicecandidate = e => {
+        if (e.candidate) {
+          socket.emit('call-user', { to: otherUserId, from: userId, signal: { candidate: e.candidate } });
+        }
+      };
+      peerConnection.ontrack = e => {
+        let video = document.getElementById('remoteVideo');
+        if (!video) {
+          video = document.createElement('video');
+          video.id = 'remoteVideo';
+          video.autoplay = true;
+          video.playsInline = true;
+          video.style = 'position:fixed;bottom:90px;right:20px;width:320px;height:240px;z-index:1000;background:#000;border-radius:1rem;';
+          document.body.appendChild(video);
+        }
+        video.srcObject = e.streams[0];
+      };
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+      socket.emit('call-user', { to: otherUserId, from: userId, signal: { sdp: offer } });
+    }
+    function showCallOverlay(type) {
+      let overlay = document.getElementById('callOverlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'callOverlay';
+        overlay.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.7);z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;';
+        document.body.appendChild(overlay);
+      }
+      overlay.innerHTML = type === 'audio'
+        ? '<div class="text-2xl mb-4">🔴 Audio call in progress...</div><button onclick="endCallOverlay()" class="bg-red-500 px-6 py-2 rounded-lg font-bold">End Call</button>'
+        : '<div class="text-2xl mb-4">🔴 Video call in progress...</div><button onclick="endCallOverlay()" class="bg-red-500 px-6 py-2 rounded-lg font-bold">End Call</button>';
+      overlay.style.display = 'flex';
+    }
+
+    function showLocalVideo(stream) {
+      let local = document.getElementById('localVideo');
+      if (!local) {
+        local = document.createElement('video');
+        local.id = 'localVideo';
+        local.autoplay = true;
+        local.muted = true;
+        local.playsInline = true;
+        local.style = 'position:fixed;bottom:90px;left:20px;width:160px;height:120px;z-index:1100;background:#222;border-radius:1rem;';
+        document.body.appendChild(local);
+      }
+      local.srcObject = stream;
+    }
+
+    function endCallOverlay() {
+      let overlay = document.getElementById('callOverlay');
+      if (overlay) overlay.style.display = 'none';
+      let local = document.getElementById('localVideo');
+      if (local) local.remove();
+      if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+      }
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+      }
+      socket.emit('end-call', { to: otherUserId, from: userId });
+    }
+
+    socket.on('call-made', async ({ from, signal }) => {
+      if (!peerConnection) {
+        peerConnection = new RTCPeerConnection(config);
+        peerConnection.onicecandidate = e => {
+          if (e.candidate) {
+            socket.emit('answer-call', { to: from, from: userId, signal: { candidate: e.candidate } });
+          }
+        };
+        peerConnection.ontrack = e => {
+          let media = signal.sdp && signal.sdp.type === 'offer' ? document.createElement('video') : document.createElement('audio');
+          media.autoplay = true;
+          media.playsInline = true;
+          media.style = 'position:fixed;bottom:90px;right:20px;width:320px;height:240px;z-index:1000;background:#000;border-radius:1rem;';
+          document.body.appendChild(media);
+          media.srcObject = e.streams[0];
+        };
+      }
+      if (signal.sdp) {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+        if (signal.sdp.type === 'offer') {
+          localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: signal.sdp.type === 'offer' && signal.sdp.sdp.includes('video') });
+          localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+          const answer = await peerConnection.createAnswer();
+          await peerConnection.setLocalDescription(answer);
+          socket.emit('answer-call', { to: from, from: userId, signal: { sdp: answer } });
+        }
+      } else if (signal.candidate) {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(signal.candidate));
+      }
+    });
+
+    socket.on('call-answered', async ({ from, signal }) => {
+      if (signal.sdp) {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+      } else if (signal.candidate) {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(signal.candidate));
+      }
+    });
+
+    socket.on('call-ended', () => {
+      if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+      }
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+      }
+      const video = document.getElementById('remoteVideo');
+      if (video) video.remove();
+      const audio = document.getElementById('remoteAudio');
+      if (audio) audio.remove();
+    });
+
+    // End call on window close
+    window.addEventListener('beforeunload', () => {
+      if (peerConnection) {
+        socket.emit('end-call', { to: otherUserId, from: userId });
+      }
+    });
+
+    // File upload (image or audio)
+    document.getElementById('fileUpload').addEventListener('change', function(e) {
+      const log = document.getElementById('chat-log');
+      log.textContent = 'Uploading photo or audio...';
+      setTimeout(() => { log.textContent = ''; }, 3000);
+      document.querySelector('footer form').submit();
+    });
+
+    // Audio recording
+    let mediaRecorder, audioChunks = [];
+    const recordBtn = document.getElementById('recordBtn');
+    recordBtn.addEventListener('click', async function() {
+      const log = document.getElementById('chat-log');
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        recordBtn.textContent = '🎤';
+        log.textContent = '';
+        return;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      mediaRecorder.onstart = () => {
+        log.textContent = 'Recording...';
+      };
+      mediaRecorder.onstop = () => {
+        log.textContent = 'Uploading audio...';
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const file = new File([audioBlob], 'audio.webm', { type: 'audio/webm' });
+        const formData = new FormData();
+        formData.append('file', file);
+        fetch(`/chat/${otherUserId}`, { method: 'POST', body: formData })
+          .then(() => location.reload());
+        setTimeout(() => { log.textContent = ''; }, 3000);
+      };
+      mediaRecorder.start();
+      recordBtn.textContent = 'Stop';
+    });
+  </script>
+</body>
+</html>
