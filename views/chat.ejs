@@ -152,14 +152,14 @@
   <footer class="bg-gray-800 p-3 shadow-inner fixed bottom-0 left-0 w-full z-10">
     <form action="/chat/<%= otherUser._id %>" method="POST" enctype="multipart/form-data" class="flex items-center gap-3 max-w-lg mx-auto">
       <label class="cursor-pointer text-xl" title="Send Image or Audio">
-        📷/
+        📷
         <input type="file" id="fileUpload" name="file" accept="image/*,audio/*" class="hidden">
       </label>
       <input type="text" name="content" placeholder="Type your message..."
-        class="flex-grow rounded-lg px-4 py-2 text-black focus:outline-none" />
+        class="flex-grow rounded-lg px-3 py-2 text-black focus:outline-none" />
       <button type="button" id="recordBtn" class="bg-yellow-500 hover:bg-yellow-400 px-3 py-2 rounded-lg text-white font-semibold">🎤</button>
       <button type="submit"
-        class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-white font-semibold">
+        class="bg-indigo-400 hover:bg-indigo-400 px-4 py-2 rounded-lg text-white font-semibold">
         Send
       </button>
     </form>
