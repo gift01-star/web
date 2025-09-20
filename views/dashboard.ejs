@@ -85,7 +85,7 @@
               %>
                 <div class="relative w-full h-full snap-center flex-shrink-0">
                   <img src="<%= photo.startsWith('/') ? photo : '/uploads/' + photo %>" class="absolute inset-0 w-full h-full object-cover" style="border-top-left-radius: 1rem; border-top-right-radius: 1rem;" />
-                  <% if (user.online) { %>
+                  <% if (user.isOnline) { %>
                     <span class="absolute top-3 right-3 w-4 h-4 bg-green-400 border-2 border-white rounded-full z-20"></span>
                   <% } %>
                 </div>
@@ -97,10 +97,12 @@
             <div>
               <h2 class="text-xl font-bold text-pink-300"><%= user.name %></h2>
               <div class="flex items-center justify-center gap-2 mt-1">
-                <% if (user.online) { %>
-                  <span class="text-green-400 font-semibold text-xs">Online</span>
+                <% if (user.isOnline) { %>
+                  <span class="inline-flex items-center gap-1 text-green-400 font-semibold text-xs"><span class="w-2 h-2 bg-green-400 rounded-full inline-block"></span>Online</span>
+                <% } else if (user.lastOnline) { %>
+                  <span class="inline-flex items-center gap-1 text-gray-400 font-semibold text-xs"><span class="w-2 h-2 bg-gray-400 rounded-full inline-block"></span>Offline <span class="ml-1 text-[10px]">(Last seen: <%= new Date(user.lastOnline).toLocaleTimeString() %>)</span></span>
                 <% } else { %>
-                  <span class="text-gray-400 font-semibold text-xs">Offline</span>
+                  <span class="inline-flex items-center gap-1 text-gray-400 font-semibold text-xs"><span class="w-2 h-2 bg-gray-400 rounded-full inline-block"></span>Offline</span>
                 <% } %>
               </div>
               <p class="text-sm text-gray-300 mt-1 italic"><%= user.bio %></p>

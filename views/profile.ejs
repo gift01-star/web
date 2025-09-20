@@ -38,7 +38,16 @@
       <% } %>
     </div>
     <div class="px-6 py-4">
-      <h1 class="text-2xl font-bold text-pink-300"><%= user.name %></h1>
+      <h1 class="text-2xl font-bold text-pink-300 flex items-center gap-2 justify-center">
+        <%= user.name %>
+        <% if (user.isOnline) { %>
+          <span class="inline-flex items-center gap-1 text-green-400 font-semibold text-xs"><span class="w-2 h-2 bg-green-400 rounded-full inline-block"></span>Online</span>
+        <% } else if (user.lastOnline) { %>
+          <span class="inline-flex items-center gap-1 text-gray-400 font-semibold text-xs"><span class="w-2 h-2 bg-gray-400 rounded-full inline-block"></span>Offline <span class="ml-1 text-[10px]">(Last seen: <%= new Date(user.lastOnline).toLocaleTimeString() %>)</span></span>
+        <% } else { %>
+          <span class="inline-flex items-center gap-1 text-gray-400 font-semibold text-xs"><span class="w-2 h-2 bg-gray-400 rounded-full inline-block"></span>Offline</span>
+        <% } %>
+      </h1>
       <p class="italic text-gray-400 mt-2"><%= user.bio %></p>
       <div class="mt-4 text-gray-300 text-sm space-y-1">
   <p><strong>Gender:</strong> <%= user.gender || 'Not specified' %></p>
