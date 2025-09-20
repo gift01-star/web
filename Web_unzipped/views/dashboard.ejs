@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>pakona </title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <script src="/socket.io/socket.io.js"></script>
+
+  <style>
+    .user-item.online::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 10px;
+      height: 10px;
+      background-color: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 5px #22c55e88;
+    }
+
+    .card-hover {
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 8px 20px rgba(255, 105, 180, 0.4);
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-b from-purple-900 via-gray-900 to-black text-white min-h-screen">
+
+  <!-- Navbar -->
+  <nav class="bg-purple-600 p-4 flex justify-between items-center shadow-lg">
+    <div class="text-2xl font-extrabold tracking-wider"></div>
+    <button id="menu-btn" class="text-2xl md:hidden">☰</button>
+    <ul id="menu" class="hidden md:flex space-x-6 text-lg">
+      <li><a href="/matches" class="hover:text-yellow-300 transition">Matches</a></li>
+      <li><a href="/chat/list" class="hover:text-yellow-300 transition">Chats</a></li>
+      <li><a href="/likes" class="hover:text-yellow-300 transition">Likes</a></li>
+       <a href="/profile1" class="block hover:text-pink-400">Profile</a>
+    <a href="/settings" class="block hover:text-pink-400">Settings</a>
+    <a href="/premium" class="block hover:text-pink-400">Premium</a>
+    <a href="/privacy" class="block hover:text-pink-400">Privacy</a>
+    <a href="/stories" class="block hover:text-pink-400">Stories</a>
+    <a href="/notifications" class="text-pink-200 hover:text-white font-semibold">
+    <i class="fas fa-bell"></i> Notifications
+     </a>
+    </ul>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="hidden bg-gray-800 p-4 md:hidden space-y-3 rounded-b-lg shadow-lg">
+    <a href="/profile1" class="block hover:text-pink-400">Profile</a>
+    <a href="/likes" class="block hover:text-pink-400">Likes</a>
+    <a href="/premium" class="block hover:text-pink-400">Premium</a>
+    <a href="/privacy" class="block hover:text-pink-400">Privacy</a>
+    <a href="/logout" class="block text-red-400 hover:text-red-300">Logout</a>
+  </div>
+
+  <!-- User Cards: Horizontal Swipe -->
+  <div class="p-4 mt-6">
+    <div id="user-cards" class="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-6" style="scrollbar-width: thin;">
+      <% users.forEach(user => { %>
+        <div class="min-w-[320px] max-w-xs bg-gray-800 rounded-2xl shadow-lg text-center card-hover relative overflow-hidden snap-center flex-shrink-0 flex flex-col" style="height: 480px;">
+          <div class="relative w-full h-2/3">
+            <!-- User image gallery -->
+            <div class="flex overflow-x-auto snap-x snap-mandatory h-full" id="photos-<%= user._id %>">
+              <% 
+                let images = [];
+                if (Array.isArray(user.profileImage) && user.profileImage.length > 0) {
+                  images = user.profileImage;
+                } else if (user.image && user.image.trim() !== '') {
+                  images = [user.image];
+                } else if (typeof user.profileImage === 'string' && user.profileImage.trim() !== '') {
+                  images = [user.profileImage];
+                } else {
+                  images = ['/uploads/default.jpg'];
+                }
+                images.forEach(function(photo) { 
+              %>
+                <div class="relative w-full h-full snap-center flex-shrink-0">
+                  <img src="<%= photo.startsWith('/') ? photo : '/uploads/' + photo %>" class="absolute inset-0 w-full h-full object-cover" style="border-top-left-radius: 1rem; border-top-right-radius: 1rem;" />
+                  <% if (user.online) { %>
+                    <span class="absolute top-3 right-3 w-4 h-4 bg-green-400 border-2 border-white rounded-full z-20"></span>
+                  <% } %>
+                </div>
+              <% }) %>
+            </div>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+          </div>
+          <div class="flex-1 flex flex-col justify-between px-4 py-3">
+            <div>
+              <h2 class="text-xl font-bold text-pink-300"><%= user.name %></h2>
+              <div class="flex items-center justify-center gap-2 mt-1">
+                <% if (user.online) { %>
+                  <span class="text-green-400 font-semibold text-xs">Online</span>
+                <% } else { %>
+                  <span class="text-gray-400 font-semibold text-xs">Offline</span>
+                <% } %>
+              </div>
+              <p class="text-sm text-gray-300 mt-1 italic"><%= user.bio %></p>
+  <script>
+    // Like button AJAX handler
+    function likeUser(userId, btn) {
+      btn.disabled = true;
+      fetch(`/likes/like/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(res => res.json())
+      .then(data => {
+        btn.innerText = '❤️ Liked';
+        btn.classList.add('bg-pink-700');
+      })
+      .catch(() => {
+        btn.disabled = false;
+        alert('Error sending like.');
+      });
+    }
+  </script>
+              <div class="mt-2 text-sm text-gray-200 space-y-1">
+                <p><strong>Gender:</strong> <%= user.gender %></p>
+                <p><strong>Age:</strong> <%= user.age %></p>
+                <p><strong>Interests:</strong> <%= Array.isArray(user.interests) ? user.interests.join(', ') : user.interests %></p>
+                <p>
+                  <strong>Location:</strong>
+                  <% if (user.city && user.city.trim() !== '') { %>
+                    <%= user.city %>
+                  <% } else { %>
+                    Not specified
+                  <% } %>
+                  <% if (user.distance) { %>
+                    <span class="ml-2 text-xs text-pink-300">(~<%= user.distance %> km away)</span>
+                  <% } %>
+                </p>
+              </div>
+            </div>
+            <div class="flex justify-center gap-3 mt-4">
+
+              <button onclick="likeUser('<%= user._id %>', this)" class="bg-pink-500 px-3 py-1 rounded-full hover:bg-pink-400 transition flex items-center gap-1 text-sm font-semibold">❤️</button>
+              <a href="/chat/<%= user._id %>" class="bg-blue-500 px-3 py-1 rounded-full hover:bg-blue-400 transition flex items-center gap-1 text-sm font-semibold">
+                <i class="fas fa-comment"></i>💬
+              </a>
+              <a href="/profile/<%= user._id %>" class="bg-purple-600 px-3 py-1 rounded-full hover:bg-purple-500 transition flex items-center gap-1 text-sm font-semibold">
+                <i class="fas fa-user"></i> View
+              </a>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+
+  <!-- Mobile Bottom Nav -->
+  <nav class="fixed bottom-0 left-0 w-full bg-gray-900 border-t border-gray-700 md:hidden z-50">
+    <div class="flex justify-around items-center text-sm text-gray-400">
+      <a href="/matches" class="flex flex-col items-center p-2 hover:text-pink-400">
+        <i class="fas fa-user-friends text-lg"></i>
+           👥
+     Matches
+      </a>
+      <a href="/chat/list" class="flex flex-col items-center p-2 hover:text-pink-400">
+        <i class="fas fa-comments text-lg"></i>
+       💬
+   Chats
+      </a>
+      <a href="/settings" class="flex flex-col items-center p-2 hover:text-pink-400">
+        <i class="fas fa-user text-lg"></i>
+         ⚙️
+ settings
+      </a>
+      <a href="/stories" class="flex flex-col items-center p-2 hover:text-pink-400">
+        <i class="fas fa-user text-lg"></i>
+         📖
+  Stories
+      </a>
+      <a href="/notifications" class="text-pink-200 hover:text-white font-semibold">
+      <i class="fas fa-bell"></i>🔔 
+   Notifications
+       </a>
+    </div>
+  </nav>
+
+  <!-- Scripts -->
+  <script>
+    // Mobile menu toggle
+    document.getElementById('menu-btn').addEventListener('click', () => {
+      document.getElementById('mobile-menu').classList.toggle('hidden');
+    });
+
+    // Optional: Touch swipe for user cards (basic)
+    const userCards = document.getElementById('user-cards');
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+    userCards.addEventListener('mousedown', (e) => {
+      isDown = true;
+      userCards.classList.add('cursor-grabbing');
+      startX = e.pageX - userCards.offsetLeft;
+      scrollLeft = userCards.scrollLeft;
+    });
+    userCards.addEventListener('mouseleave', () => {
+      isDown = false;
+      userCards.classList.remove('cursor-grabbing');
+    });
+    userCards.addEventListener('mouseup', () => {
+      isDown = false;
+      userCards.classList.remove('cursor-grabbing');
+    });
+    userCards.addEventListener('mousemove', (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - userCards.offsetLeft;
+      const walk = (x - startX) * 2;
+      userCards.scrollLeft = scrollLeft - walk;
+    });
+    // Touch events for mobile
+    let touchStartX = 0;
+    let touchScrollLeft = 0;
+    userCards.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].pageX;
+      touchScrollLeft = userCards.scrollLeft;
+    });
+    userCards.addEventListener('touchmove', (e) => {
+      const x = e.touches[0].pageX;
+      const walk = (x - touchStartX) * 2;
+      userCards.scrollLeft = touchScrollLeft - walk;
+    });
+
+    const socket = io();
+    socket.emit('userOnline', userId);
+
+    socket.on('onlineUsers', (onlineUsers) => {
+      document.querySelectorAll('.user-item').forEach(userElem => {
+        const id = userElem.dataset.userid;
+        userElem.classList.toggle('online', onlineUsers.includes(id));
+      });
+    });
+  </script>
+
+</body>
+</html>
+
