@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= user.name %>'s Profile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center py-10">
+
+  <div class="bg-gray-800 p-0 rounded-2xl shadow-lg w-full max-w-md text-center overflow-hidden">
+    <!-- Swipeable Photos -->
+    <div id="profile-photos" class="flex overflow-x-auto snap-x snap-mandatory relative" style="height: 320px;">
+      <% 
+        let images = [];
+        if (Array.isArray(user.photos) && user.photos.length > 0) {
+          images = user.photos;
+        } else if (user.image && user.image.trim() !== '') {
+          images = [user.image];
+        } else if (user.photo && user.photo.trim() !== '') {
+          images = [user.photo];
+        } else {
+          images = ['default.jpg'];
+        }
+        images.forEach(function(photo) { 
+      %>
+        <img src="<%= photo.startsWith('/') ? photo : '/uploads/' + photo %>" alt="<%= user.name %>" class="w-full h-full object-cover snap-center flex-shrink-0" />
+      <% }) %>
+      <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+        <% images.forEach(function(photo, idx) { %>
+          <span class="w-2 h-2 rounded-full bg-pink-400 opacity-70 inline-block" id="dot-<%= idx %>"></span>
+        <% }) %>
+      </div>
+  <% if (user && session && session.user && session.user._id && session.user._id.toString() === user._id.toString()) { %>
+        <form action="/profile/delete" method="POST" onsubmit="return confirm('Are you sure you want to delete your profile? This action cannot be undone.');" style="margin-top:2rem;">
+          <button type="submit" style="background:linear-gradient(90deg,#ec4899 0%,#8b5cf6 100%);color:#fff;font-weight:600;border:none;border-radius:1rem;padding:0.9rem 2rem;font-size:1.1rem;cursor:pointer;">Delete Profile</button>
+        </form>
+      <% } %>
+    </div>
+    <div class="px-6 py-4">
+      <h1 class="text-2xl font-bold text-pink-300"><%= user.name %></h1>
+      <p class="italic text-gray-400 mt-2"><%= user.bio %></p>
+      <div class="mt-4 text-gray-300 text-sm space-y-1">
+  <p><strong>Gender:</strong> <%= user.gender || 'Not specified' %></p>
+  <p><strong>Age:</strong> <%= user.age || 'Not specified' %></p>
+  <p><strong>Interests:</strong> <%= Array.isArray(user.interests) && user.interests.length > 0 ? user.interests.join(', ') : (user.interests || 'Not specified') %></p>
+  <p><strong>Hobbies:</strong> <%= Array.isArray(user.hobbies) && user.hobbies.length > 0 ? user.hobbies.join(', ') : (user.hobbies || 'Not specified') %></p>
+  <p><strong>Religion:</strong> <%= user.religion || 'Not specified' %></p>
+  <p><strong>Preferred Gender:</strong> <%= user.preferredGender || 'Not specified' %></p>
+  <p><strong>Location:</strong> <%= user.location || 'Not specified' %></p>
+  
+      </div>
+      <!-- Social Links (example) -->
+      <% if (user.social) { %>
+        <div class="mt-3 flex justify-center gap-3">
+          <% if (user.social.instagram) { %>
+            <a href="<%= user.social.instagram %>" target="_blank" class="text-pink-400 hover:text-pink-300 text-xl"><i class="fab fa-instagram"></i></a>
+          <% } %>
+          <% if (user.social.twitter) { %>
+            <a href="<%= user.social.twitter %>" target="_blank" class="text-blue-400 hover:text-blue-300 text-xl"><i class="fab fa-twitter"></i></a>
+          <% } %>
+        </div>
+      <% } %>
+      <div class="mt-6 flex justify-center gap-4">
+        <a href="/like/<%= user._id %>" class="bg-pink-500 px-4 py-2 rounded-full hover:bg-red-500 text-white font-semibold">
+          ❤️ 
+        </a>
+        <a href="/chat/<%= user._id %>" class="bg-blue-500 px-4 py-2 rounded-full hover:bg-blue-400 text-white font-semibold">
+          💬 
+        </a>
+        <a href="/report/<%= user._id %>" class="bg-gray-700 px-4 py-2 rounded-full hover:bg-gray-600 text-white font-semibold">
+          🚩 Report
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <a href="/dashboard" class="mt-6 text-indigo-400 hover:underline text-sm">← Back to Dashboard</a>
+
+  <script>
+    // Swipe dots indicator (optional, basic)
+    const photos = document.querySelectorAll('#profile-photos img');
+    const dots = document.querySelectorAll('[id^="dot-"]');
+    const profilePhotos = document.getElementById('profile-photos');
+    profilePhotos.addEventListener('scroll', () => {
+      const scrollLeft = profilePhotos.scrollLeft;
+      const width = profilePhotos.offsetWidth;
+      const idx = Math.round(scrollLeft / width);
+      dots.forEach((dot, i) => dot.style.opacity = i === idx ? '1' : '0.7');
+    });
+  </script>
+</body>
+</html>
