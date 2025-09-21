@@ -3,8 +3,9 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const router = express.Router();
 
-// Temporary token storage (in-memory)
-let resetTokens = {};
+const User = require('../models/User');
+
+// No in-memory tokens; use DB fields
 
 // Request Reset Form
 router.get('/reset-password', (req, res) => {
@@ -12,11 +13,16 @@ router.get('/reset-password', (req, res) => {
 });
 
 // Handle Reset Request
-router.post('/reset-password', (req, res) => {
+
+router.post('/reset-password', async (req, res) => {
   const email = req.body.email;
   const token = crypto.randomBytes(20).toString('hex');
-
-  resetTokens[token] = { email, expires: Date.now() + 3600000 };
+  const expire = Date.now() + 3600000;
+  const user = await User.findOne({ email });
+  if (!user) return res.send('No user with that email.');
+  user.resetPasswordToken = token;
+  user.resetPasswordExpire = expire;
+  await user.save();
 
   const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -27,7 +33,7 @@ router.post('/reset-password', (req, res) => {
   });
 
 
- const resetLink =`http://pakona.onrender.com/reset-form/${token}`;
+ const resetLink =`http://web-gun6.onrender.com/reset-form/${token}`;
 
 console.log('Reset link:', resetLink);
 
@@ -53,26 +59,27 @@ const mailOptions = {
 });
 
 // Show Reset Form
-router.get('/reset-form/:token', (req, res) => {
-  const tokenData = resetTokens[req.params.token];
-  if (!tokenData || tokenData.expires < Date.now()) {
+router.get('/reset-form/:token', async (req, res) => {
+  const user = await User.findOne({ resetPasswordToken: req.params.token, resetPasswordExpire: { $gt: Date.now() } });
+  if (!user) {
     return res.send('Token invalid or expired.');
   }
   res.render('reset-form', { token: req.params.token });
 });
 
 // Handle New Password Submission
-router.post('/reset-form/:token',async (req, res) => {
-  const tokenData = resetTokens[req.params.token];
-  if (!tokenData || tokenData.expires < Date.now()) {
+router.post('/reset-form/:token', async (req, res) => {
+  const user = await User.findOne({ resetPasswordToken: req.params.token, resetPasswordExpire: { $gt: Date.now() } });
+  if (!user) {
     return res.send('Token expired.');
   }
-
   const newPassword = req.body.password;
-  console.log('Password for ${tokenData.email} updated to: ${newPassword}');
-
-  delete resetTokens[req.params.token];
-  res.send('Password reset successfull. You can now <a href="/login">Log in</a>'); // redirect to login after reset
+  // You should hash the password in production!
+  user.passwordHash = await require('bcrypt').hash(newPassword, 10);
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpire = undefined;
+  await user.save();
+  res.send('Password reset successful. You can now <a href="/login">Log in</a>');
 });
 
 module.exports = router;

@@ -146,13 +146,8 @@ function isLoggedIn(req, res, next) {
     req.user = req.session.user;
     return next();
   }
-  // Not logged in: render dashboard with empty users array and defaults
-  res.render('dashboard', {
-    user: null,
-    users: [],
-    likedBy: [],
-    query: ''
-  });
+  // Not logged in: redirect to login
+  return res.redirect('/login');
 }
 
 //routes
@@ -409,8 +404,15 @@ app.get('/dashboard', isLoggedIn, async (req, res) => {
       }
       return {
         ...u.toObject(),
-        distance: distance ? distance.toFixed(1) : null
+        distance: distance !== null ? Number(distance.toFixed(2)) : null
       };
+    });
+
+    // Sort users by distance (nearest first, then users without distance)
+    usersWithDistance.sort((a, b) => {
+      if (a.distance === null) return 1;
+      if (b.distance === null) return -1;
+      return a.distance - b.distance;
     });
 
     // Fetch users who liked the logged-in user

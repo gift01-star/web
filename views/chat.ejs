@@ -149,21 +149,42 @@
   </main>
 
   <!-- Footer: Message Input + Camera Button -->
-  <footer class="bg-gray-800 p-3 shadow-inner fixed bottom-0 left-0 w-full z-10">
-    <form action="/chat/<%= otherUser._id %>" method="POST" enctype="multipart/form-data" class="flex items-center gap-3 max-w-lg mx-auto">
-      <label class="cursor-pointer text-xl" title="Send Image or Audio">
+
+  <footer class="bg-gray-800 p-2 shadow-inner fixed bottom-0 left-0 w-full z-10">
+    <form action="/chat/<%= otherUser._id %>" method="POST" enctype="multipart/form-data" class="flex items-center gap-2 max-w-lg mx-auto">
+      <label class="cursor-pointer text-xl" title="Send Image or Audio" style="margin-bottom:0;">
         📷
         <input type="file" id="fileUpload" name="file" accept="image/*,audio/*" class="hidden">
       </label>
       <input type="text" name="content" placeholder="Type your message..."
-        class="flex-grow rounded-lg px-3 py-2 text-black focus:outline-none" />
-      <button type="button" id="recordBtn" class="bg-yellow-500 hover:bg-yellow-400 px-3 py-2 rounded-lg text-white font-semibold">🎤</button>
+        class="flex-grow rounded-lg px-2 py-1 text-black focus:outline-none text-sm" style="min-height:36px; max-height:36px;" />
+      <button type="button" id="recordBtn" class="bg-yellow-500 hover:bg-yellow-400 px-2 py-1 rounded-lg text-white font-semibold text-base" style="min-width:36px; min-height:36px;">🎤</button>
       <button type="submit"
-        class="bg-indigo-400 hover:bg-indigo-400 px-4 py-2 rounded-lg text-white font-semibold">
+        class="bg-indigo-400 hover:bg-indigo-400 px-3 py-1 rounded-lg text-white font-semibold text-base" style="min-width:48px; min-height:36px;">
         Send
       </button>
     </form>
   </footer>
+
+  <style>
+    @media (max-width: 640px) {
+      footer form input[type="text"] {
+        font-size: 15px;
+        padding: 6px 8px;
+        min-height: 36px;
+        max-height: 36px;
+      }
+      footer form button, footer form label {
+        min-width: 36px;
+        min-height: 36px;
+        font-size: 18px;
+        padding: 0 6px;
+      }
+      footer {
+        padding: 4px 0 !important;
+      }
+    }
+  </style>
 
   <!-- Scripts -->
   <script>

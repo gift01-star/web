@@ -33,6 +33,14 @@
   </style>
 </head>
 <body class="bg-gradient-to-b from-purple-900 via-gray-900 to-black text-white min-h-screen">
+  <% if (user && user.city) { %>
+    <div class="w-full flex justify-center mt-4">
+      <div class="bg-gray-800 text-pink-200 px-4 py-2 rounded-full shadow text-lg font-semibold flex items-center gap-2">
+        <i class="fas fa-map-marker-alt text-pink-400"></i>
+        Your location: <span class="ml-1"><%= user.city %></span>
+      </div>
+    </div>
+  <% } %>
   <script>
           var hasLocation = "<%= (user && user.location && user.location.coordinates && user.location.coordinates.length === 2) ? 'true' : 'false' %>";
   </script>

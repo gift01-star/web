@@ -45,7 +45,16 @@
           <li class="flex items-center"><i class="fas fa-star text-pink-400 mr-2"></i> <span class="font-semibold">Hobbies:</span> <span class="ml-1"><%= Array.isArray(profileuser.hobbies) && profileuser.hobbies.length > 0 ? profileuser.hobbies.join(', ') : 'Not specified' %></span></li>
           <li class="flex items-center"><i class="fas fa-praying-hands text-pink-400 mr-2"></i> <span class="font-semibold">Religion:</span> <span class="ml-1"><%= profileuser.religion || 'Not specified' %></span></li>
           <li class="flex items-center"><i class="fas fa-venus-mars text-pink-400 mr-2"></i> <span class="font-semibold">Preferred Gender:</span> <span class="ml-1"><%= profileuser.preferredGender || 'Not specified' %></span></li>
-          <li class="flex items-center"><i class="fas fa-map-marker-alt text-pink-400 mr-2"></i> <span class="font-semibold">Location:</span> <span class="ml-1"><%= profileuser.location || 'Not specified' %></span></li>
+          <li class="flex items-center"><i class="fas fa-map-marker-alt text-pink-400 mr-2"></i> <span class="font-semibold">Location:</span> <span class="ml-1">
+            <% if (profileuser.city && profileuser.city.trim() !== '') { %>
+              <%= profileuser.city %>
+            <% } else { %>
+              Not specified
+            <% } %>
+            <% if (profileuser.distance) { %>
+              <span class="ml-2 text-xs text-pink-300">(~<%= profileuser.distance %> km away)</span>
+            <% } %>
+          </span></li>
           <li class="flex items-center"><i class="fas fa-phone text-pink-400 mr-2"></i> <span class="font-semibold">Phone:</span> <span class="ml-1"><%= profileuser.phone || 'Not specified' %></span></li>
           <li class="flex items-center"><i class="fas fa-envelope text-pink-400 mr-2"></i> <span class="font-semibold">Email:</span> <span class="ml-1"><%= profileuser.email || 'Not specified' %></span></li>
           <li class="flex items-center"><i class="fas fa-check-circle text-pink-400 mr-2"></i> <span class="font-semibold">Verified:</span> <span class="ml-1"><%= profileuser.isVerified ? 'Yes' : 'No' %></span></li>

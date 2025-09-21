@@ -218,11 +218,11 @@ router.get('/register-step3', async (req, res) => {
 
 router.post('/register-step3', async (req, res) => {
   if (!req.session.userId) return res.redirect('/register-step1');
-  const { age, gender, religion } = req.body;
-  if ( !age || !gender) return res.render('register-step3', { error: 'Age and gender required' });
+  const { age, gender, religion, city } = req.body;
+  if (!age || !gender || !religion || !city) return res.render('register-step3', { error: 'All fields are required' });
   if (Number(age) < 18) return res.render('register-step3', { error: 'You must be 18+' });
   try {
-    await User.findByIdAndUpdate(req.session.userId, { age: Number(age), gender, religion });
+    await User.findByIdAndUpdate(req.session.userId, { age: Number(age), gender, religion, city });
     res.redirect('/register-step4');
   } catch (err) {
     console.error(err);

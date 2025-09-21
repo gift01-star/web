@@ -138,8 +138,22 @@
           </select>
         </div>
         <div>
-          <label for="religion">Religion (optional)</label>
-          <input name="religion" id="religion" type="text" placeholder="Religion (optional)" />
+          <label for="religion">Religion</label>
+          <select name="religion" id="religion" required>
+            <option value="">Select religion</option>
+            <option>Christianity</option>
+            <option>Islam</option>
+            <option>Hinduism</option>
+            <option>Buddhism</option>
+            <option>Judaism</option>
+            <option>Traditional/Indigenous</option>
+            <option>Atheist</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label for="city">Location (City/District)</label>
+          <input name="city" id="city" type="text" placeholder="e.g. Lilongwe, Blantyre" required />
         </div>
         <button type="submit">Next</button>
       </form>
