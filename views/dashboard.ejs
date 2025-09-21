@@ -47,6 +47,10 @@
 
   <% const hasLocation = user && user.location && user.location.coordinates && user.location.coordinates.length === 2; %>
 
+  <!-- Mobile Notification Button (top left) -->
+  <a href="/notifications" id="mobile-notif-btn" class="fixed top-3 left-3 z-50 bg-pink-600 text-white rounded-full p-3 shadow-lg md:hidden flex items-center justify-center" style="width:44px;height:44px;">
+    <i class="fas fa-bell"></i>
+  </a>
   <!-- Navbar -->
   <nav class="bg-purple-600 p-4 flex justify-between items-center shadow-lg">
     <div class="text-2xl font-extrabold tracking-wider"></div>
@@ -55,14 +59,14 @@
       <li><a href="/matches" class="hover:text-yellow-300 transition">Matches</a></li>
       <li><a href="/chat/list" class="hover:text-yellow-300 transition">Chats</a></li>
       <li><a href="/likes" class="hover:text-yellow-300 transition">Likes</a></li>
-       <a href="/profile1" class="block hover:text-pink-400">Profile</a>
-    <a href="/settings" class="block hover:text-pink-400">Settings</a>
-    <a href="/premium" class="block hover:text-pink-400">Premium</a>
-    <a href="/privacy" class="block hover:text-pink-400">Privacy</a>
-    <a href="/stories" class="block hover:text-pink-400">Stories</a>
-    <a href="/notifications" class="text-pink-200 hover:text-white font-semibold">
-    <i class="fas fa-bell"></i> Notifications
-     </a>
+      <a href="/profile1" class="block hover:text-pink-400">Profile</a>
+      <a href="/settings" class="block hover:text-pink-400">Settings</a>
+      <a href="/premium" class="block hover:text-pink-400">Premium</a>
+      <a href="/privacy" class="block hover:text-pink-400">Privacy</a>
+      <a href="/stories" class="block hover:text-pink-400">Stories</a>
+      <a href="/notifications" class="text-pink-200 hover:text-white font-semibold md:inline hidden">
+        <i class="fas fa-bell"></i> Notifications
+      </a>
     </ul>
   </nav>
 
@@ -194,10 +198,7 @@
          📖
   Stories
       </a>
-      <a href="/notifications" class="text-pink-200 hover:text-white font-semibold">
-      <i class="fas fa-bell"></i>🔔 
-   Notifications
-       </a>
+    <!-- Notification button moved to top left for mobile -->
     </div>
   </nav>
 
