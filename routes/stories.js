@@ -6,8 +6,12 @@ const isLoggedIn = (req, res, next) => req.session.userId ? next() : res.redirec
 
 // GET all stories
 router.get('/', async (req, res) => {
-  const stories = await Story.find().sort({ createdAt: -1 });
-  res.render('stories', { stories, error: null, success: null, user: req.session.userId });
+  const stories = await Story.find().populate('author').sort({ createdAt: -1 });
+  let user = null;
+  if (req.session.userId) {
+    user = await User.findById(req.session.userId);
+  }
+  res.render('stories', { stories, error: null, success: null, user });
 });
 
 // POST new story

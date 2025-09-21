@@ -34,19 +34,29 @@
           <h2 class="text-xl font-bold text-pink-300 mb-2"><%= story.title %></h2>
           <p class="text-gray-200 mb-2"><%= story.content %></p>
           <div class="text-xs text-gray-400 flex justify-between mb-2">
-            <span>By <%= story.authorName || 'Anonymous' %></span>
+            <span>By 
+              <% if (story.author && story.author._id && story.author.name) { %>
+                <a href="/profile/<%= story.author._id %>" class="text-pink-400 hover:underline font-semibold">
+                  <%= story.author.name %>
+                </a>
+              <% } else { %>
+                <%= story.authorName || 'Anonymous' %>
+              <% } %>
+            </span>
             <span><%= new Date(story.createdAt).toLocaleDateString() %></span>
           </div>
           <div class="flex items-center gap-4 mb-2">
-            <form action="/stories/<%= story._id %>/<%= story.likes.includes(user._id) ? 'unlike' : 'like' %>" method="POST" style="display:inline;">
-              <button type="submit" class="text-pink-400 hover:text-pink-600 font-bold">
-                <%= story.likes.includes(user._id) ? 'Unlike' : 'Like' %>
-              </button>
-            </form>
+            <% if (user && user._id) { %>
+              <form action="/stories/<%= story._id %>/<%= story.likes.includes(user._id) ? 'unlike' : 'like' %>" method="POST" style="display:inline;">
+                <button type="submit" class="text-pink-400 hover:text-pink-600 font-bold">
+                  <%= story.likes.includes(user._id) ? 'Unlike' : 'Like' %>
+                </button>
+              </form>
+            <% } %>
             <span class="text-gray-300 text-sm"><%= story.likes.length %> likes</span>
           </div>
           <!-- Edit/Delete buttons for owner -->
-          <% if (user && user._id && story.author && story.author.toString && story.author.toString() === user._id.toString()) { %>
+          <% if (user && user._id && story.author && story.author._id && story.author._id.toString() === user._id.toString()) { %>
             <form action="/stories/<%= story._id %>/delete" method="POST" style="display:inline;">
               <button type="submit" class="text-red-400 hover:underline mr-2">Delete</button>
             </form>
